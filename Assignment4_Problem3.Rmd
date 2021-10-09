@@ -1,0 +1,121 @@
+---
+title: "Are we overestimating the adaptation potential of earlier planting dates?"
+author: "Supriya Savalkar"
+date: "10/1/2021"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r}
+#install.packages(c("wordcloud","tm"),repos="http://cran.r-project.org")
+##Reference: http://www.sthda.com/english/wiki/text-mining-and-word-
+##cloud-fundamentals-in-r-5-simple-steps-you-should-know
+library(tm)
+library(wordcloud)
+library(RColorBrewer)
+library(wordcloud2)
+# Read txt data
+# text <- readLines(file.choose())
+text = readLines("C:/SUPRIYA/HWT.txt")
+
+# Load the data as a corpus
+docs <- Corpus(VectorSource(text))
+inspect(docs)
+
+
+
+# Clean text
+docs <- tm_map(docs, content_transformer(tolower))
+docs <- tm_map(docs, removeNumbers)
+docs <- tm_map(docs, removeWords, stopwords("english"))
+docs <- tm_map(docs, removePunctuation)
+docs <- tm_map(docs, stripWhitespace)
+inspect(docs)
+
+
+
+##Build a term-document matrix
+
+
+
+dtm <- TermDocumentMatrix(docs)
+m <- as.matrix(dtm)
+v <- sort(rowSums(m),decreasing=TRUE)
+d <- data.frame(word = names(v),freq=v)
+head(d, 10)
+layout(matrix(c(1, 2), nrow=2), heights=c(1, 4))
+par(mar=rep(0, 4))
+plot.new()
+text(x=0.5, y=0.5, "Are we overestimating the adaptation potential of earlier planting dates?")
+
+
+## Generate the Word cloud
+set.seed(1234)
+wordcloud(words = d$word, freq = d$freq, min.freq = 1,
+max.words=100, random.order=FALSE, rot.per=0.35,
+colors=brewer.pal(5, "Dark2"))
+
+```
+
+Alternate code
+```{r}
+#install.packages(c("wordcloud","tm"),repos="http://cran.r-project.org")
+library(wordcloud)
+library(tm)
+Jist <- "Global warming negatively impacts crop yields via increased heat stress and 
+accelerated plant phenology . 
+Spring warming could allow earlier planting and alleviate these negative yield impacts 
+via completion of critical crop growth stages before exposure to higher temperature.
+Most crop model applications that estimate climate change impact on crop yields 
+consider earlier planting as an adaptation strategy.In these studies, planting date 
+estimates are typically estimated solely based on temperature. However, excess 
+soil moisture can make the field inaccessible even when temperature are conducive to 
+planting. Therefore, current crop modeling approaches are likely overestimating the 
+potential of earlier planting as a climate change adaptation strategy. How do future 
+crop yield projections change when planting dates account for temperature and soil moisture
+as opposed to focusing solely on temperature? Are current climate change impact studies
+overestimating the potential of earlier planting as an adaptation strategy by ignoring 
+the key soil moisture effect on field workability? For the current study we are looking 
+at 32 major fruit and vegetable producing counties across the United States as estimated
+from the United State Department of Agriculture’s 2018 Census of Agriculture. 
+To meet the objectives of the study we would be looking at the following tasks:
+The Probable Planting Date is a temperature based planting date.
+For determining it we consider a moving window of 10 consecutive frost-free days 
+with daily average temperature above 10°C and the planting occurs on the following day.
+Actual planting dates are obtained from the NDVI timeseries from the satellite imagery 
+data and the start of the season.Obtain the soil moisture data and downscale it to obtain
+a daily moisture timeseries. Determine a joint soil moisture and temperature based 
+planting date. For this we will consider the optimum soil moisture at which plating
+can occur alongside looking at the temperature suitability.Crop Syst simulates the 
+soil water budget, soil plant nitrogen, crop phenology, crop yield, residue production etc.
+Running Crop Syst with soil and climate input for planting dates based on temperature and 
+joint temperature and soil moisture. This will help in understanding the effect of 
+planting dates on yields. Data and tools used for the study. 
+Climate data inputs: Meteorological data include gridMET (data from1979-2020) and
+CMIP 5 climate projections downscaled to a 4km resolution based on the MACA 
+methodology (RCP 4.5 and RCP 8.5 for 2021-2100).Satellite Imagery: Using Landsat 5, 7 and 8
+to obtain the NDVI time series and smoothing the timeseries using Savitzky Golay
+technique in R Studio. Start of season from the 250 m eMODIS Remote Sensing Phenology Data 
+(SOST* we have some doubts about using planting dates from this data product). 
+Various soil moisture data products are currently being looked at, 
+to name a few: Sentinel-SMAP- Crop CASMA, NLDAS, ASMR-E, NOAA SMOPS etc.
+STATSGO and SSURGO data that comprise the U.S. General Soil 
+Map for the soil information in CropSyst model.CropSyst to obtain yield estimates.
+ArcGIS and QGIS for maps and shapefile processing.
+These results of study will provide the climate change and crop modeling community
+guidance on when and where it is important to account for soil moisture 
+aspects to realistically quantify the adaptation potential of earlier planting. 
+This study would help in determining if the soil moisture constrained delays 
+in earlier planting reduce the positive yield impacts of earlier planting. 
+The deliverables from this study will include a report which will provide 
+insights on yield impacts due to planting dates and R scripts used to synthesize 
+this information."
+
+layout(matrix(c(1, 2), nrow=2), heights=c(1, 4))
+par(mar=rep(0, 4))
+plot.new()
+text(x=0.5, y=0.5, "Are we overestimating the adaptation potential of earlier planting dates?")
+wordcloud(Jist,colors=brewer.pal(5,"Dark2"), main="Title")
+```

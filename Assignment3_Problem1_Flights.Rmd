@@ -1,0 +1,84 @@
+---
+title: "CPT_S575_Assignment3_P1"
+author: "Supriya Savalkar"
+date: "9/19/2021"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+setwd("E:/CourseWork/Fall2021_CPT_S575_DataScience/Assignment")
+## This is the main file.
+Flights_M<- read.csv("flights.csv")
+##Load  the  data  into  R and  check  for  abnormalities(NAs).
+Flights <- na.omit(Flights_M)
+data.frame(head(Flights))
+summary(Flights)
+head(Flights)
+```
+
+a)Count  the number  of flights that  departed  NYC  in  the  first  week  (first  7  days)  of January and February combined. (filter(), query())
+```{r}
+Dep_NYC <- filter(Flights, month<=2,day<=7)
+count(Dep_NYC)
+```
+Ans a) The flights that depart from NYC in the first week of January and February are 12034
+
+b)Print the year,month,day, carrier and  air_time of  the flights with  the 6 longest air times, in descending order of air_time. (select(), arrange()
+```{r}
+LongFlight <- Flights |> 
+    select(year, month, day, carrier, air_time)  |> 
+       arrange(desc(air_time)) |> 
+          slice_head(n=6)
+print(LongFlight)
+```
+c)Add a new column to the dataframe; speed(in miles per hour)is the ratio of distance to air_time.Note that the unit of speed should be miles per hour. If you think they might be useful,  feel  free  to  extract  more  features  than  these,  and  describe  what  they  are. (mutate()
+```{r}
+Flights <- Flights |>  mutate(Speed = distance/air_time*60)
+##Today delay of flights
+Flights <- Flights |> 
+                mutate(TotalDelay = dep_delay+arr_delay)
+head(Flights)
+```
+d)Display the  average,  min  and  max air_time times  for  each month. (group_by(), summarise()). You canexclude NAs for this calculation.
+```{r}
+Flight_Month <- Flights |>
+                  group_by(month) |> 
+                    summarise(avg_air_time=mean(air_time),
+                              min_air_time=min(air_time),
+                              max_air_time=max(air_time))
+Flight_Month
+
+```
+e) Impute the missing air_times as the distance divided by the average speed  of flights for that destination  (dest).  Make  a  second  copy  of  your  dataframe,  but  this  time  impute missing air_time with  the  average air_time for  that destination. What  assumptions  do  these data filling methods make? Which is the best way to impute the data, or do you see a better way,  and  why?  You  may  impute or  remove other  variables  as  you  find  appropriate. Briefly explain your decisions.(group_by(),mutate(), group by(),assign())
+```{r}
+AT1 <- data.frame(Flights_M)
+AT1 <- AT1 |> mutate(Speed=distance/air_time*60)
+## Averaging the speed
+Method1 <- AT1 |> 
+  select(year, month, day, origin, distance,dest, air_time, Speed) |> 
+  group_by(dest) |> 
+  mutate(avg_speed=mean(Speed, na.rm=TRUE)) |> 
+  mutate(air_time_new=ifelse(is.na(air_time),distance/avg_speed*60,air_time)) 
+head(Method1)
+## Averaging the air_time
+Method2 <- AT1 |> 
+  select(year, month, day, origin, distance,dest, air_time, Speed) |> 
+  group_by(dest) |> 
+  mutate(avg_AT=mean(air_time, na.rm=TRUE)) |> 
+  mutate(air_time_new2=ifelse(is.na(air_time),avg_AT,air_time)) 
+head(Method2)
+##location of the cell which is not filles by Method1 and Method 2
+which(is.na(Method1$air_time_new))
+which(is.na(Method2$avg_AT))
+
+```
+Both methods of filling data are good as they are grouped as per the destination but I feel  using the average speed is better than using the average air_time as this helps in overcoming over predicting the air_time. Suppose the average air_time is 80minutes, average speed is 50miles and we have a location at a distance of 1000miles, the imputed air_time as per speed here would be 120minutes against the average of 80minutes . But this method does not hold good if we do not have distance that's when the averaging air_time will be useful. Averaging air_time is more simple and straightforward. There is a destination LGA with only one entry in the entire dataset and it does not have either the distance or the air_time. This makes filling the missing value for the cell by both methods difficult, which(is.na) helps in identifying the location of this entry. From this we can understand if there is no information about a particular entry it is difficult to impute its value. For the 275946 entry there is no much information. A quick google showed that these airports are 32 miles which is 40minute drive and I do not think there would be a connecting flight for such a small distance and there other options like Uber, Lyft, airport express bus service etc to connect these locations.
+
+
+
+

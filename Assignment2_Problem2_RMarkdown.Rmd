@@ -1,0 +1,112 @@
+---
+title: "Assignment2_Problem2_ForestFires"
+author: "Supriya Savalkar"
+date: "9/6/2021"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(pastecs)
+library(corrplot)
+library(psych)
+library(RColorBrewer)
+library(ggpubr)
+library(PerformanceAnalytics)
+
+##2.Specify which of the predictors are quantitative(measuring numeric properties such as size, or quantity), and which are qualitative(measuring non-numeric properties such as color, appearance, type etc.), if any?Keep in mind that a qualitative variable may be represented as a quantitative type in the dataset, or thereverse. You may wish to adjust the types of your variables based on your findings.
+
+FF <- read.csv("https://scads.eecs.wsu.edu/wp-content/uploads/2021/09/forestfires.csv).", sep=",", header=TRUE) |> na.omit()
+head(FF)
+str(FF)
+summary(FF)
+```
+##2.b What is the range, mean and standard deviation of each quantitative predictor? 
+```{r}
+StatisticsFF <- stat.desc(FF)
+StatFFClean <- StatisticsFF |>  slice(6,9,13)
+head(StatFFClean)
+```
+##2.c Now remove the 20th through 70th (inclusive) observations from the dataset. What is the range, mean, and standard deviationof each predictor in the subset of the data that remains?
+```{r}
+FF_mod <- FF |> slice(-20:-70)
+StatisticsFF_mod <- stat.desc(FF_mod)
+StatFF_modClean <- StatisticsFF_mod |>  slice(6,9,13)
+head(StatFF_modClean )
+```
+## 2.d Produce a bar plot to show the count of forest fires in each month. During which months are forest fires most common? (Hint: group data by month and calculate count)
+```{r}
+MaxMonth_FF <- FF |>  group_by(month) |> count()
+head(MaxMonth_FF)
+ggplot(MaxMonth_FF, aes(x=n, fill=month))+geom_histogram(bins=30)+xlab('ForestFire Count')+
+  ylab('length to obtain the total count of forest fires')+ggtitle('Months with maximum Forest Fires')
+##or
+counts <- table(FF$month)
+barplot(counts, main="Months with maximum Forest Fires",col=c("darkblue"),
+   xlab="Months")
+## The forest fires are highest in the month of August and September
+```
+##2.e Using the full data set, investigate the predictors graphically, using scatterplots, correlation scores or othertools of your choice. Create a correlation matrix for the relevant variables
+## Reference: http://www.sthda.com/english/wiki/correlation-matrix-a-quick-start-guide-to-analyze-format-and-visualize-a-correlation-matrix-using-r-software
+```{r}
+FF_Num <- FF[c(3:11)]
+#Scatter Plot used to plot the data
+pairs(FF_Num[,1:9])
+FF_Corr_Analytics <- FF_Num[c(1:9)]
+chart.Correlation(FF_Corr_Analytics, histogram=TRUE, pch=19)
+corPlot(FF_Num, cex = 1.2)
+Corr_FF <-cor(FF_Num)
+corrplot(Corr_FF, type="upper", order="hclust",
+         col=brewer.pal(n=8, name="RdYlBu"))
+
+ggscatter(FF_Num, x = "FFMC", y = "DC",
+add = "reg.line", conf.int = TRUE,
+cor.coef = TRUE, cor.method = "pearson",
+xlab = " Fine Fuel Moisture Code index", ylab = "Duff Moisture Code index",
+main = "Correlation between FFMC and DMC" )
+
+ggscatter(FF_Num, x = "FFMC", y = "DMC",
+add = "reg.line", conf.int = TRUE,
+cor.coef = TRUE, cor.method = "pearson",
+xlab = " Fine Fuel Moisture Code index", ylab = "Drought code index",
+main = "Correlation between FFMC and DC" )
+
+ggscatter(FF_Num, x = "FFMC", y = "ISI",
+add = "reg.line", conf.int = TRUE,
+cor.coef = TRUE, cor.method = "pearson",
+xlab = " Fine Fuel Moisture Code index", ylab = "Initial spread index",
+main = "Correlation between FFMC and ISI" )
+
+ggscatter(FF_Num, x = "FFMC", y = "temp",
+add = "reg.line", conf.int = TRUE,
+cor.coef = TRUE, cor.method = "pearson",
+xlab = " Fine Fuel Moisture Code index", ylab = "Temperature",
+main = "Correlation between FFMC and temperature" )
+
+ggscatter(FF_Num, x = "FFMC", y = "wind",
+add = "reg.line", conf.int = TRUE,
+cor.coef = TRUE, cor.method = "pearson",
+xlab = " Fine Fuel Moisture Code index", ylab = "Wind",
+main = "Correlation between FFMC and Wind" )
+
+ggscatter(FF_Num, x = "FFMC", y = "rain",
+add = "reg.line", conf.int = TRUE,
+cor.coef = TRUE, cor.method = "pearson",
+xlab = " Fine Fuel Moisture Code index", ylab = "Rain",
+main = "Correlation between FFMC and Rain" )
+
+ggscatter(FF_Num, x = "FFMC", y = "area",
+add = "reg.line", conf.int = TRUE,
+cor.coef = TRUE, cor.method = "pearson",
+xlab = " Fine Fuel Moisture Code index", ylab = "Area",
+main = "Correlation between FFMC and Area" )
+
+```
+# We can observe that FFMC is directly proportional to DMC, DC, ISI, temperature but inversely to RH and there is no significant correlation with wind, rain and area. Ovearll rain and area donot have significant correlation with the other variables.Temperature is inversely proportional to RH and wind. Many such plots can be plotted or we can look at the second plot in this code chunk.
+
+## 2.f Suppose that we wish to predict the area burned by the forest fire(area) on the basis of the other variables. Which, if any,of the other variables might be useful in predicting area? Justify your answer based on the prior correlations.
+## Based on correlation matrix and correlogram we see that there is no correlation between area of the forest burned and other variables so it is really difficult to tell about it from the correlation matrix as most of the values are near zero.
+
+

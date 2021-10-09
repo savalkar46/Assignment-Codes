@@ -1,0 +1,140 @@
+---
+title: "Assignment3_Problem2_WHO"
+author: "Supriya Savalkar"
+date: "9/20/2021"
+output:
+  html_document:
+    df_print: paged
+---
+## This material was referred (https://r4ds.had.co.nz/tidy-data.html#case-study) to clean the data before answering the questions. The code is picked from it.
+```{r}
+library(dplyr)
+library(tidyverse)
+library(tidyr)
+who <- (tidyr::who)
+head(who)
+who1 <- who |> 
+  pivot_longer(
+    cols = new_sp_m014:newrel_f65, 
+    names_to = "key", 
+    values_to = "cases", 
+    values_drop_na = TRUE
+  )
+who1
+who1 |>  
+  count(key)
+##the names are slightly inconsistent because instead of new_rel we have newrel
+who2 <- who1 |>  
+  mutate(key = stringr::str_replace(key, "newrel", "new_rel"))
+who2
+##We can separate the values in each code with two passes of separate(). The first pass will split the codes at each underscore.
+who3 <- who2 |> 
+  separate(key, c("new", "type", "sexage"), sep = "_")
+who3
+##drop iso2 and iso3 since they’re redundant.
+who3 |>  
+  count(new)
+who4 <- who3 |> 
+  select(-new, -iso2, -iso3)
+##sexage into sex and age
+who5 <- who4 |> 
+  separate(sexage, c("sex", "age"), sep = 1)
+who5
+## now the data is tidy, use the who5 for further analysis
+```
+a) Explain why this line > mutate(key=stringr::str_replace(key,"newrel","new_rel"))
+Ans: This is a minor fix--> The new_rel which stands for the new relapsed cases is not consistent with the other entries under key. This makes the key inconsistent if we have newrel instead of new_rel plus it is hard to spot it in the entire data. So use unique(who1$key) to spot it and fix it as the subsequent errors can be avoided. The str_replace() replaces the characters newrel with new_rel and makes all the variable name consistent.
+
+b)How many entries are removed from the dataset when you set values_drop_na to true in the pivot_longer command (in this data set)?
+```{r}
+sum(is.na(who))
+```
+c) Explain the difference between an explicit and implicit missing value, in general. Can you find any implicit missing values in this dataset, if so where?
+Ans: The cells where we have NA it is an explicit missing value as there is no information in for that. Implicit in the context of this data means that value is not present in the data. 
+Eg: For explicit we can see in the who table that some initial year values are NA for all the components in the columns.
+For implicit we can look at the some countries do not have all the age group and have it as zero or some countries we have information from a particular year at start and for some we have it later.
+
+d)Looking at the features (country, year, var, sex, age, cases) in the tidied data, are they all appropriately typed? Are there any features you think would be better suited as a different type? Why or why not? 
+```{r}
+str(who5)
+```
+From the structure of the tidied data who5 we can see that most of the datatype are characters and can be factored off except for the year and cases which are integers and. So if we write any expression we can expect the year and cases to be output and not vice versa
+
+e)Generate an  informative  visualization,  which shows something  about the  data. Give a brief description of what it shows, and why you thought it would be interesting to investigate
+```{r}
+library(ggplot2)
+head(who5)
+#Analysis1: I want to analyse the data for countries with highest number of cases. This would help to understand where TB is prevelant and what factors are leading to it.
+Case_Country <- who5 |> 
+         group_by(country)  |> 
+            summarise(totalcases = sum(cases))
+    ## arranging in descending order
+Order_Country <- Case_Country |> 
+                    arrange(desc(totalcases))
+top5 <- Order_Country |> slice_head(n=5)
+ggplot(top5 , aes(x = country, y = totalcases, color=country)) + labs(title= "Top 5 countries with highest number of cases") + geom_point(size = 5)
+
+## Analysis2: Top 5 Year where the cases was highest and lowest in the world. the plot shows that 2007-2012 were the worst affected years and we can see a dip in 2008.This analysis helps to understand if there was some medical breakthrough which helped in reducing the cases in years there after. 
+Case_Year<- who5 |> 
+         group_by(year)  |> 
+            summarise(totalcases = sum(cases))
+## arranging in descending order
+Order_Year <- Case_Year |> 
+                    arrange(desc(totalcases))
+top5_year <- Order_Year |> 
+            slice_head(n=5)
+ggplot(top5_year , aes(x = year, y = totalcases, color=year)) + labs(title= "Top 5 years with highest number of cases") + geom_point(size = 5)
+
+bottom5_year <- Order_Year |> 
+            top_n(-5)
+ggplot(bottom5_year , aes(x = year, y = totalcases, color=year)) + labs(title= "Years with the least number of cases") + geom_point(size = 5)
+
+##Analysis 3 cases as per sex of the person infected and also the type of TB. The cases as per the sex of the person helps to understand who has been more susceptible to TB as per the data. The type of TB affecting the majority of the population will help to find ways to mitigate or get the cases under control.
+boxplot(who5$cases ~ who5$sex, main="Cases as per the sex of the person", xlab="Sex",ylab="Number of cases")
+boxplot(who5$cases ~ who5$type, main="Cases as per the type of TB", xlab="Type of TB",ylab="Number of cases")
+## We can see that the male are affected more than the female.The cases of positive smear are the highest followed by negative smear, relapse and extra pulmonary
+
+##Analysis 4: Country where youngest and oldest population is affected the most.The youngest and oldest population are the ones who are more vulnerable and the locations will help in building a better medical system when it comes to TB.
+Young<- who5 |> 
+         group_by(age, country)  |> 
+            summarise(totalcases = sum(cases)) |> 
+                filter(age=="014")
+Young_Country <- Young |> 
+                    arrange(desc(totalcases)) |> 
+                      top_n(5)
+ggplot(Young_Country , aes(x = country, y = totalcases, color=country)) + labs(title= "Countries where the youngest age group was affected the most over the years") + geom_point(size = 5)
+
+Old<- who5 |> 
+         group_by(age, country)  |> 
+            summarise(totalcases = sum(cases)) |> 
+                filter(age=="65")
+Old_Country <- Old |> 
+                    arrange(desc(totalcases)) |> 
+                      top_n(5)
+ggplot(Old_Country , aes(x = country, y = totalcases, color=country)) + labs(title= "Countries where the oldest age group was affected the most over the years") + geom_point(size = 5)
+
+## From both these plots we can infer that India and Indonesia are in the top 5 worst TB affected countries for both younger and older group of people.
+  
+```
+f)Dataset called qtrRev:
+```{r}
+setwd("E:/CourseWork/Fall2021_CPT_S575_DataScience/Assignment")
+RT1 <- read.csv("Assignment3_P2_Partf.csv")
+head(RT1)
+RT2 <-RT1 |>  pivot_longer(
+    cols = Qtr.1:Qtr.4, 
+    names_to = "Interval_ID", 
+    values_to = "Revenue", 
+    values_drop_na = TRUE
+  )
+RT3 <- RT2 |> separate(Interval_ID, c("Time_Interval","Interval_ID"))
+RT3
+```
+
+
+
+
+
+
+
+

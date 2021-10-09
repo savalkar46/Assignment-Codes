@@ -1,0 +1,48 @@
+---
+title: "Assignment4_Problem2"
+author: "Supriya Savalkar"
+date: "10/1/2021"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r}
+library(usmap)
+library(tidyverse)
+library(ggplot2)
+setwd("E:/CourseWork/Fall2021_CPT_S575_DataScience/Assignment/A4")
+COVID<- read.csv("covid19.csv")
+plot_usmap(data = COVID[,c(2,3)],regions="state", values = "Janssen_doses", color = "blue") + 
+  scale_fill_continuous(low = "cyan", high = "darkblue", name = "Janssen_doses", 
+                        label = scales::comma, limits=c(0,30000000)) + 
+  theme(legend.position = "right")+labs(title = "COVID 19 vaccination administered",
+       subtitle = "Janssen Dose")
+
+plot_usmap(data = COVID[,c(2,4)],regions="state", values = "Moderna_doses", color = "blue") + 
+  scale_fill_continuous(low = "cyan", high = "darkblue", name = "Moderna_doses",
+                        label = scales::comma, limits=c(0,30000000)) + 
+  theme(legend.position = "right")+labs(title = "COVID 19 vaccination administered",
+       subtitle = "Moderna Dose")
+
+plot_usmap(data = COVID[,c(2,5)],regions="state", values = "Pfizer_doses", color = "blue") + 
+  scale_fill_continuous(low = "cyan", high = "darkblue", name = "Pfizer_doses", 
+                        label = scales::comma, limits=c(0,30000000)) + 
+  theme(legend.position = "right")+labs(title = "COVID 19 vaccination administered",
+       subtitle = "Pfizer Dose")
+COVID <- COVID |> mutate(TotalDose=Janssen_doses+Moderna_doses+Pfizer_doses)
+plot_usmap(data = COVID[,c(2,6)],regions="state", values = "TotalDose", color = "blue") + 
+  scale_fill_continuous(low = "cyan", high = "darkblue", name = "TotalDose", 
+                        label = scales::comma, limits=c(0,50000000)) +
+  theme(legend.position = "right")+labs(title = "COVID 19 vaccination administered",
+       subtitle = "TotalDose")
+
+```
+We can observe from the maps that Pfizer doses are administered the most compared to the other vaccines.
+Among the states, California is the state with highest doses of vaccination followed by Texas and Florida.
+The same is also evident from the Total doses map.
+
+
+
+

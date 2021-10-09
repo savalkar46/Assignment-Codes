@@ -1,0 +1,98 @@
+---
+title: "Assignment2-Data Science-Problem 1:Data on Colleges"
+author: "Supriya Savalkar"
+date: "9/5/2021"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+---
+##1.a Use the read.csv()function toread the data into R, or  the csvlibrary to read in the data with python. In Ryou will load the data into a dataframe. In pythonyou may store it as a list of lists or use the pandasdataframeto store your data. Call the loaded data college.Ensure that your column headers are not treated as a rowof data.
+
+```{r libraries used}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+College <- read.csv("https://scads.eecs.wsu.edu/wp-content/uploads/2021/09/College.csv", sep=",", header=TRUE,colClasses = c("X"="character"))
+str(College)
+## I dont line the name X for the column so renaming it.
+College <- rename(College,University=X)
+head(College)
+```
+##1.b Find the median cost of room and board (Room.Board)forall schools in this dataset.Then find the median cost of room and board (Room.Board) for both public and private (Private) schools. 
+
+```{r}
+Cost_RoomBoard <- College$Room.Board
+median(Cost_RoomBoard)
+## Cost of Room.Board in Public
+Cost_RoomBoard_Public <-  select(College,University,Private,Room.Board) |> filter(Private=="No")  
+median(Cost_RoomBoard_Public$Room.Board)
+## Cost of Room.Board in Private
+Cost_RoomBoard_Private <-  select(College,University,Private,Room.Board) |> filter(Private=="Yes")  
+median(Cost_RoomBoard_Private$Room.Board)
+```
+
+##1.c Produce a scatterplot that shows a relationship between two numeric (not factor or boolean) features of your choice in the dataset. Ensure it has appropriate axis labels and a title. 
+##Scatter Plot-Relationship between two non numeric, I am plotting the Acceptance to Enrolled
+
+```{r}
+ggplot(College, aes(x=Accept, y=Enroll))+geom_point()+geom_smooth(method='lm')+xlab('Number of applicants accepted')+ylab('Number of new students enrolled')+ggtitle('Acceptance vs Enrolled: Dataset')
+
+```
+
+##1.d Produce a histogram showing the overall enrollment numbers (P.UndergradplusF.Undergrad)for both public and private (Private) schools. You may choose to show both on a single plot (using side by side bars) or produce one plot for public schools and one for private schools.Ensure whatever figures you produce have appropriate axis labels and a title. 
+```{r}
+Total_Enrollment <- College$F.Undergrad+College$P.Undergrad
+Enrollment <- cbind(select(College,University,Private),Total_Enrollment)
+ggplot(Enrollment, aes(x=Total_Enrollment))+geom_histogram(bins=25,color="green")+ggtitle('Total Enrollment in both Public and Private Universities')
+## separate plot for Public
+Enrollment_Public <-  select(Enrollment,University,Private,Total_Enrollment) |> filter(Private=="No") 
+ggplot(Enrollment_Public, aes(x=Total_Enrollment))+geom_histogram(bins=25,color="orange")+ggtitle('Total Enrollment in Public Universities')
+##separate plot for Private
+Enrollment_Private <-  select(Enrollment,University,Private,Total_Enrollment) |> filter(Private=="Yes") 
+ggplot(Enrollment_Private, aes(x=Total_Enrollment))+geom_histogram(bins=25,color="blue")+ggtitle('Total Enrollment in Private Universities')
+
+```
+
+##1.e Create a new qualitative variable, called Top, by binning the Top10perc variable into two categories(Yes and No). Specifically, divide the schools into two groups based on whether or not the proportion of students coming from the top 10% of their high school classes exceeds 75%.
+## Now produceside-by-side boxplots ofthe schools' acceptance rates(based on Acceptand Apps)for each ofthe two Top categories. There should be two boxes on your figure, one for top schools and one for others. How many top universities are there?
+##New qualitative variable, Top with Yes or No where the Top10perc exceeds the 75%
+```{r}
+College$Top <-  ifelse(College$Top10perc>75,"Yes","No")
+College$Top
+## Count of Top Universities
+sum(College$Top == "Yes")
+College$Acceptance <- College$Accept/College$Apps
+ggplot(College, aes(x=Top, y=Acceptance, fill=Top))+geom_boxplot()+xlab("Top")+ylab("Acceptance")+ggtitle('Boxplot for Top10perc universities and others') 
+```
+
+##1.f Continue exploring the data, producing two new plots of any type, and provide a brief(one to two sentence)summary of your hypotheses and what you discover.Feel free to think outside the box on this one but if you want something to point you in the right direction, look at the summary statistics for various features, and think about what they tell you. Perhaps try plotting various features from the dataset against each other and see if any patterns emerge.  
+##Two more plots
+## All the Statistics Computation of the data
+```{r}
+summary(College)
+## The summary of the data gives a good idea of the statistics of the entire dataset.
+# 1.f. a Top 10 most expensive universities for out of state students per semester
+College$Costperstudent <- College$Outstate+ College$Room.Board +College$Books+College$Personal
+MostExpensive_10 <- top_n(College, 10, Costperstudent)
+head(MostExpensive_10)
+## These Stacked barplot and the pie chart indicate student to faculty ratio in the Top10 most expensive universities.
+Stacked_barplot<- ggplot(MostExpensive_10, aes(x="", y=S.F.Ratio, fill=University))+ggtitle('Student to Faculty ratio in Top 10 expensive universities for Outstate students')+
+  geom_bar(width = 1, stat = "identity")
+Stacked_barplot
+SFRatio_ExpensiveUniTop10 <-Stacked_barplot  + coord_polar("y", start=0)+ggtitle('Student to Faculty ratio in Top 10 expensive universities for Outstate students')
+SFRatio_ExpensiveUniTop10
+## From the stacked bar plot and pie chart we can see that highest student to faculty ratio in top 10 most expensive universities is at Wesleyan University. The highest SF ratio here is 12.1. This roughly indicates that the students would have more opportunity to interact with faculty. The lowest value can be seen at Yale University which stands at 5.3.
+# 1.f.b, Plot of Acceptance Ratio in TOP 15 UNIVERSITIES with highest number of applications
+# The plot shows acceptance ratio in the top 15 universities which receive highest number of application. We can see that University of Virginia has the lowest acceptance ratio which means it is comparatively difficult to get into this university or there is lot of competition to secure admission.Also it means that the university would make more money in application.
+HighestApplication <- top_n(College,15,Apps)
+HighestApplication$AcceptanceRatio <- HighestApplication$Accept/ HighestApplication$Apps
+ggplot(HighestApplication, aes(x=AcceptanceRatio, fill=University))+geom_histogram(bins=50)+ggtitle(('Acceptance Ratio in universities with highest applications'))
+## Plot of acceptance to graduation rate
+# I had seen many plots that were plotted side by side and wanted to try one. We can observe that in public universities the most of the acceptance is around 0.60-0.80 and the average graduation is around 50%. In private universities the densification of acceptance rate points is around 0.80 with graduation rate around 65-70%. So there is higher acceptance and graduation rate in private universities
+ggplot(College, aes(Acceptance, Grad.Rate)) + geom_point(color="red", size=2) + facet_wrap(~Private)+ggtitle(('Acceptance Ratio to Graduation Rate'))
+```
+## kernel Density plot-2d density
+##melt data for organising
+

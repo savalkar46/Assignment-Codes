@@ -1,0 +1,112 @@
+---
+title: "Assignment4_Problem1"
+author: "Supriya Savalkar"
+date: "10/2/2021"
+output: pdf_document
+---
+```{r}
+library(formatR)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, 
+                      tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+```
+
+a) Filter the dataset(using a leftjoin)to display the tail number, year, month, day,  hour,  origin,  and  humidity  for all  flights heading  to Tampa  International Airport(TPA) after 12pm on November 1, 2013.
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(nycflights13)
+library(maps)
+library("viridis")
+airlines <- nycflights13::airlines
+flights <- nycflights13::flights
+airports <- nycflights13::airports
+planes <- nycflights13::planes
+weather <- nycflights13::weather
+Data <- left_join(flights,weather, by = c('origin'='origin', 'year'='year',
+                        'month'='month', 'day'='day', 'time_hour'='time_hour'))
+TPA_Main <-Data |>  filter(dest=='TPA')|> filter(year>=2013) |>
+  filter(month>=11)|> filter(day>=1) |> filter( hour.x >=12)
+TPA <- TPA_Main[c("tailnum","year","month","day","hour.x","origin","humid")] 
+colnames(TPA)[5] <- c("hour")
+```
+
+b) What is the difference between the following two joins? anti_join(flights,airports,by=c("dest"="faa"))
+anti_join(airports,flights,by=c("faa"="dest"))
+```{r}
+F2A <- anti_join(flights,airports,by=c("dest"="faa"))
+unique(F2A$dest)
+A2F <- anti_join(airports,flights,by=c("faa"="dest"))
+```
+The expression anti_join(flights, airports, by = c("dest" = "faa")) returns the flights that went to an airport that is not in the FAA list of destinations. Since the FAA list only contains domestic airports, these are likely foreign flights. Using the unique on this dataframe we see there are only four airports in this list.
+The expression anti_join(airports, flights, by = c("faa" = "dest")) returns the US airports that were not the destination of any flight in the data. Since the data contains all flights from New York City airports, this is also the list of US airports that did not have a nonstop flight from New York City in 2013.
+
+c) Filter the table flights to only show flights with planes that have flown at least 100 flights. Hint: tailnum is used to identify planes.(suggested functions: R:semi_join(), count(), filter();Python: merge(), value_counts(), filter())
+
+```{r}
+Flight100 <- flights |> 
+  count(tailnum) |> 
+  filter(n>=1)
+Flight100 <- merge(flights,Flight100, c("tailnum"="tailnum")) |> filter(n>=100)
+Plane_100 <- semi_join(planes, Flight100, by = c("tailnum"))
+##unique(Plane_100)
+## There are 1118 planes that have flown atleast 100flights out of the 3322.
+```
+
+d)What weather conditions make it more likely to see a delay? Briefly discuss any relations/patterns you found.
+```{r}
+flight_weather <-
+  flights |> 
+  inner_join(weather, by = c(
+    "origin" = "origin",
+    "year" = "year",
+    "month" = "month",
+    "day" = "day",
+    "hour" = "hour"
+  ))
+flight_weather |> 
+  group_by(precip) |> 
+  summarise(delay = mean(dep_delay, na.rm = TRUE)) |> 
+  ggplot(aes(x = precip, y = delay)) +
+  geom_line(color="blue") + geom_point()
+
+flight_weather |> 
+  ungroup() |> 
+  mutate(visib_cat = cut_interval(visib, n = 10)) |> 
+  group_by(visib_cat) |> 
+  summarise(dep_delay = mean(dep_delay, na.rm = TRUE)) |> 
+  ggplot(aes(x = visib_cat, y = dep_delay)) +
+  geom_point(color="blue")
+
+```
+We see with any amount of precipitaiton there is delay. However, there is not a strong a trend above 0.02 in. of precipitation.There seems to be a stronger relationship between visibility and dela and delays are higher when visibility is less than 2 miles and on an average about 25-30 minutes.
+
+
+e) Produce  a  map that sizes each destination  airport  by  the number  of incoming  flights.You may use  a  continuous  scale for  the size.Here  is  a  code snippet  to  draw  a  map  of  all  flight  destinations,  which  you  can  use  as  a  starting point. You may need to install the maps packages if you have not already. Adjust the title, axis labels and aesthetics to make this visualization as clear as possible.
+
+```{r}
+flights|> count(dest) |> left_join(airports,c("dest"="faa"))|>  ggplot(aes(y = lat, x = lon, size = n, colour=n)) +
+  borders("state") +
+  geom_point() +
+  coord_quickmap() +
+  scale_colour_viridis()
+```
+
+```{r}
+flights %>%
+left_join(airports, c("dest" = "faa")) %>%
+filter(between(lon, -140, -60))%>%
+ggplot(aes(lon, lat, color=dest, size = flight)) +
+borders("state") +
+scale_x_continuous()+
+scale_y_continuous()+
+geom_point() +
+coord_quickmap()+
+theme(panel.background = element_blank())+
+labs(x = "Latitude", y = "Longitude" )
+```
+
+
+
+
+
