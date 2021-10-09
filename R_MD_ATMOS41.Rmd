@@ -1,0 +1,41 @@
+---
+title: "ATMOS41_Code"
+author: "Supriya Savalkar"
+date: "10/06/2021"
+output: html_document
+---
+
+```{r}
+ATMOS<- read.csv("E:/CourseWork/Fall2021_BSYSE_540_Instrumentation/Lab_Reports/Lab3_ATMOS/ATMOS_Data.csv")
+ATMOS <- ATMOS |> separate(TIMESTAMP, c("Month", "Day", "Year"), sep = "/")
+ATMOS <- ATMOS |> separate(Year, c("Year", "Time"), sep = " ")
+ATMOS <- ATMOS |> separate(Time, c("Hour", "Minute"), sep = ":")
+Solar <- ATMOS |> group_by(Hour, Minute) |> select(Solar) 
+Solar <- Solar |> unite(Time, Hour, Minute, sep = ":")
+Solar$Time <- as.POSIXct(Solar$Time, format="%H:%M")
+cut(Solar$Time, breaks="5 min")
+Solar <- aggregate(Solar["Solar"], 
+                   list(fiveMin=cut(Solar$Time, "5 mins")),
+                   mean)|> separate(fiveMin, c("Day", "Time"), sep = " ")
+Vapor_Pressure <- ATMOS |> group_by(Hour, Minute) |> select(Vapor_Pressure) 
+Vapor_Pressure <- Vapor_Pressure |> unite(Time, Hour, Minute, sep = ":")
+Vapor_Pressure$Time <- as.POSIXct(Vapor_Pressure$Time, format="%H:%M")
+cut(Vapor_Pressure$Time, breaks="5 min")
+Vapor_Pressure<- aggregate(Vapor_Pressure["Vapor_Pressure"], 
+                   list(fiveMin=cut(Vapor_Pressure$Time, "5 mins")),
+                   mean)|> separate(fiveMin, c("Day", "Time"), sep = " ")
+AirTemp <- ATMOS |> group_by(Hour, Minute) |> select(AirTemp)  
+AirTemp <- AirTemp |> unite(Time, Hour, Minute, sep = ":")
+AirTemp$Time <- as.POSIXct(AirTemp$Time, format="%H:%M")
+cut(AirTemp$Time, breaks="5 min")
+AirTemp<- aggregate(AirTemp["AirTemp"], 
+                   list(fiveMin=cut(AirTemp$Time, "5 mins")),
+                   mean) |> separate(fiveMin, c("Day", "Time"), sep = " ")
+RelHumidity <- ATMOS |> group_by(Hour, Minute) |> select(RelHumidity )  
+RelHumidity <- RelHumidity |> unite(Time, Hour, Minute, sep = ":")
+RelHumidity$Time <- as.POSIXct(RelHumidity$Time, format="%H:%M")
+cut(RelHumidity$Time, breaks="5 min")
+RelHumidity<- aggregate(RelHumidity["RelHumidity"], 
+                    list(fiveMin=cut(RelHumidity$Time, "5 mins")),
+                    mean) |> separate(fiveMin, c("Day", "Time"), sep = " ")
+```
