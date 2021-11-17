@@ -1,0 +1,53 @@
+---
+title: "Assignment5_Problem1"
+author: "Supriya Savalkar"
+date: "10/26/2021"
+output: pdf_document
+---
+
+
+1) This  question  involves  the  use  of  multiple  linear  regression  on  the  Cars  data  set 
+available  on  Canvas  in  the  Datasets  module.  Ensure  that  values  are  represented  in  the 
+appropriate types. 
+a. Perform  a  multiple  linear  regression  with  MPG  as  the  response  and  all  other 
+variables except Car as the predictors. Show a printout of the result (including 
+coefficient, error and t values for each predictor). Comment on the output: 
+```{r}
+library()
+cars <- read.csv("E:/CourseWork/Fall2021_CPT_S575_DataScience/Assignment/A5/cars.csv")
+cars <- na.omit(cars)
+str(cars)
+lm.fit <- lm(MPG~.-Car, data = cars)
+summary(lm.fit)
+```
+We can observe that the p value <0.001 which is highly significant. There isn't much that can be understood from R-squared value as it depends on the field.
+
+i) Which predictors appear to have a statistically significant relationship to the response, and how do you determine this? 
+When we look ar the Pr value everything except cylinders, horsepower, acceleration and OriginJapan have a significant statistical relationship to the response. From the signif.codes we can see that if the p>0.05 then the null hypothesis is rejected and therefore there is no significant effect of those variables.
+
+ii)What does the coefficient for the Displacement variable suggest, in simple terms? 
+ The Pr value for Displacement is 0.02065 which is statistically significant. We can see from the estimate value that if the displacement changes by a unit value it would result into 0.02192 increase in the mpg.It basically means the vehicle is more fuel efficient.
+ 
+b) Produce diagnostic plots of the linear regression fit. Comment on any problems 
+you see with the fit. Do the residual plots suggest any unusually large outliers? Does the 
+leverage plot identify any observations with unusually high leverage? 
+ 
+```{r}
+lm_fit2 = lm(MPG~.-Car, cars) # Run a regression analysis
+plot(lm_fit2)
+```
+In the first plot of the residuals v/s fitted values we can see a few outliers indicating the data to be non linear towards the higher values. This is around -10 to -30 range. The Normal Q-Q plot shows that the standardized residuals are fitted well between -2 to 2 and are off in the -3 to -2 and  2 to 3 quantile region. 
+
+c. Fit linear regression models with interaction effects. Do any interactions appear 
+to be statistically significant? 
+```{r}
+lm.fit3 <- lm(MPG~.^4, data=cars[2:8])
+summary(lm.fit3)
+plot(lm.fit3)
+```
+Here I have attempted to look at interaction of four factors.We can see from the Pr value that most of them are greater than 0.05 which means that they are statistically not significant. I tried to look at the interaction of two and three terms and looks like the three terms interaction has some combinations that are statistically significant wit a R-square value of around 0.835. Anything greater than 5 factors for interaction makes the Pr value greater than 0.05 making everything insignificant. So 3 or 4 fators for interaction is optimum for this data set.
+
+
+
+
+

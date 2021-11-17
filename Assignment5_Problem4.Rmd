@@ -1,0 +1,97 @@
+---
+title: "Assignment5_Problem4"
+author: "Supriya Savalkar"
+date: "10/27/2021"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r}
+### Referred https://smltar.com/mlclassification.html#evaluation
+library(tidyverse)
+library(tm)
+library(tokenizers)
+library(corpus)
+library(tidymodels)
+library(textrecipes)
+library(discrim)
+complaints <- read.csv("E:/CourseWork/Fall2021_CPT_S575_DataScience/Assignment/A5/consumer_complaints.csv")
+glimpse(complaints)
+head(complaints$Consumer_complaint)
+complaints$Consumer_complain |> 
+  str_extract_all("\\{\\$[0-9\\.]*\\}") |> 
+  compact() |> 
+  head()
+set.seed(1234)
+complaints2class <- complaints %>%
+  mutate(product = factor(if_else(
+  Product == paste("Credit reporting, credit repair services,",
+                     "or other personal consumer reports"),
+    "Credit", "Other"
+  )))
+
+complaints_split <- initial_split(complaints2class, strata = product)
+
+complaints_train <- training(complaints_split)
+complaints_test <- testing(complaints_split)
+dim(complaints_train)
+dim(complaints_test)
+str(complaints)
+
+complaints_rec <-
+  recipe(Product ~ Consumer_complaint, data = complaints_train)
+complaints_rec <- complaints_rec %>%
+  step_tokenize(Consumer_complaint) %>%
+  step_tokenfilter(Consumer_complaint, max_tokens = 1e3) %>%
+  step_tfidf(Consumer_complaint)
+
+complaint_wf <- workflow() %>%
+  add_recipe(complaints_rec)
+
+nb_spec <- naive_Bayes() %>%
+  set_mode("classification") %>%
+  set_engine("naivebayes")
+
+nb_spec
+
+library(naivebayes)
+nb_fit <- complaint_wf %>%
+  add_model(nb_spec) %>%
+  fit(data = complaints_train)
+
+## Evaluation
+set.seed(234)
+complaints_folds <- vfold_cv(complaints_train)
+
+complaints_folds
+
+nb_wf <- workflow() %>%
+  add_recipe(complaints_rec) %>%
+  add_model(nb_spec)
+
+nb_wf
+
+nb_rs <- fit_resamples(
+  nb_wf,
+  complaints_folds,
+  control = control_resamples(save_pred = TRUE)
+)
+nb_rs_metrics <- collect_metrics(nb_rs)
+nb_rs_predictions <- collect_predictions(nb_rs)
+nb_rs_metrics
+nb_rs_predictions %>%
+  group_by(id) %>%
+  roc_curve(truth = Product, .pred_Credit) %>%
+  autoplot() +
+  labs(
+    color = NULL,
+    title = "ROC curve for US Consumer Finance Complaints",
+    subtitle = "Each resample fold is shown in a different color"
+  )
+conf_mat_resampled(nb_rs, tidy = FALSE) %>%
+  autoplot(type = "heatmap")
+
+```
+
+

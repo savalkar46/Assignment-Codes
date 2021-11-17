@@ -1,0 +1,128 @@
+---
+title: "Assignment5_Problem2"
+author: "Supriya Savalkar"
+date: "10/26/2021"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+
+a)For each predictor, fit a simple linear regression model to predict the response. 
+Include the code, but not the output for all models in your solution.  
+I have referred https://rpubs.com/cheeloonglian/342714 and code that Professor Assefaw used in class to solve this problem.
+
+```{r}
+library(ISLR)
+library(MASS)
+attach(Boston)
+names(Boston)
+fit.zn <- lm(crim ~ zn)
+summary(fit.zn)
+fit.indus <- lm(crim ~ indus)
+summary(fit.indus)
+fit.chas <- lm(crim ~ chas)
+summary(fit.chas)
+fit.nox<- lm(crim ~ nox)
+summary(fit.nox)
+fit.rm<- lm(crim ~ rm)
+summary(fit.rm)
+fit.age<- lm(crim ~ age)
+summary(fit.age)
+fit.dis <- lm(crim ~ dis)
+summary(fit.dis )
+fit.rad<- lm(crim ~ rad)
+summary(fit.rad)
+fit.tax<- lm(crim ~ tax)
+summary(fit.tax)
+fit.ptratio <- lm(crim ~ ptratio)
+summary(fit.ptratio)
+fit.black <- lm(crim ~ black)
+summary(fit.black)
+fit.lstat <- lm(crim ~ lstat)
+summary(fit.lstat)
+fit.medv <- lm(crim ~ medv)
+summary(fit.medv)
+cor(Boston[c(1,5,4,6,8,14)])
+```
+b) In  which  of  the  models  is  there  a  statistically  significant  association  between 
+the  predictor  and  the  response?  Considering  the  meaning  of  each  variable,  discuss  the 
+relationship  between  crim  and  nox,  chas,  rm,  dis  and  medv  in  particular.  How  do  these 
+relationships differ? 
+
+The predictors medv, lstat, black, tax, rad, dis, nox, indus have low Pr value and are statistically significant value. Predictors except chas have statistically significant association. The Pr value for chas is Chas has a higher p value of 0.209  and is not significant.
+
+When we observe the correlation matrix between crim, nox, chas,rm, dis and medv we can see nox increases with the per capaita crime rate but chas is least affected as it reduces with increase in crime rate. 
+
+c) Fit a multiple regression model to predict the response using all the predictors. 
+Describe your results. For which predictors can we reject the null hypothesis H0 : βj = 0?
+
+```{r}
+fit.all <- lm(crim ~ ., data = Boston)
+summary(fit.all)
+
+```
+From the Pr value we can see that zn, indus, dis, rad, black, medv have a statistically significant relationship which means we can reject the null hypothesis for them.
+
+d) How  do  your  results  from  (a)  compare  to  your  results  from  (c)?  Create  a  plot 
+displaying  the univariate regression coefficients from (a) on the x-axis, and the multiple 
+regression  coefficients  from  (c)  on  the  y-axis.  That  is,  each  predictor  is  displayed  as  a 
+single point in the plot. Its coefficient in a simple linear regression model is shown on the 
+x-axis, and its coefficient estimate in the multiple linear regression model is shown on the 
+y-axis. What does this plot tell you about the various predictors?
+
+```{r}
+linear_reg <- c(fit.zn$coefficients[2], fit.indus$coefficients[2], fit.chas$coefficients[2],
+fit.nox$coefficients[2], fit.rm$coefficients[2], fit.age$coefficients[2],
+fit.dis$coefficients[2], fit.rad$coefficients[2], fit.tax$coefficients[2],
+fit.ptratio$coefficients[2], fit.black$coefficients[2],
+fit.lstat$coefficients[2], fit.medv$coefficients[2])
+multi_reg <- c(fit.all$coefficients)
+multi_reg <-multi_reg[-1] ## adjust for length
+plot(linear_reg, multi_reg,col ="red")
+head(linear_reg)
+head(multi_reg)
+cor(Boston[-c(1, 4)])
+
+```
+
+
+Difference between the simple and multiple regression coefficients varies. The difference is because in simple regression case, the slope term represents the average effect of an increase in the predictor, ignoring other predictors and in the multiple regression case, the slope term represents the average effect of an increase in the predictor, while holding other predictors fixed. It does make sense for the multiple regression to suggest no relationship between the response and some of the predictors while the simple linear regression implies the opposite because the correlation between the predictors show some strong relationships between some of the predictors.The nox coefficient is 31 and others are near zero and in multiple regression nox is -10.
+
+So for example, when “age” is high there is a tendency in “dis” to be low, hence in simple linear regression which only examines “crim” versus “age”, we observe that higher values of “age” are associated with higher values of “crim”, even though “age” does not actually affect “crim”. So “age” is a surrogate for “dis”; “age” gets credit for the effect of “dis” on “crim”.
+
+e) Is  there  evidence  of  non-linear  association  between  any  of  the  predictors  and 
+the response? To answer this question, for each predictor X, fit a model of the form 
+Y = β0 + β1X + β2X2 + β3X3+ ε 
+Hint: use the poly() function in R. Again, include the code, but not the output for 
+each  model  in  your  solution,  and  instead  describe  any  non-linear  trends  you 
+uncover.     
+
+
+```{r}
+fit.zn2 <- lm(crim ~ poly(zn, 3))
+summary(fit.zn2)
+fit.indus2 <- lm(crim ~ poly(indus, 3))
+summary(fit.indus2)
+fit.nox2 <- lm(crim ~ poly(nox, 3))
+summary(fit.nox2)
+fit.rm2 <- lm(crim ~ poly(rm, 3))
+summary(fit.rm2)
+fit.age2 <- lm(crim ~ poly(age, 3))
+summary(fit.age2)
+fit.dis2 <- lm(crim ~ poly(dis, 3))
+summary(fit.dis2)
+fit.rad2 <- lm(crim ~ poly(rad, 3))
+summary(fit.rad2)
+fit.tax2 <- lm(crim ~ poly(tax, 3))
+summary(fit.tax2)
+fit.ptratio2 <- lm(crim ~ poly(ptratio, 3))
+summary(fit.ptratio2)
+fit.black2 <- lm(crim ~ poly(black, 3))
+summary(fit.black2)
+fit.lstat2 <- lm(crim ~ poly(lstat, 3))
+summary(fit.lstat2)
+fit.medv2 <- lm(crim ~ poly(medv, 3))
+summary(fit.medv2)
+
+```
+For “indus”, “nox”, “age”, “dis”, “ptratio” and “medv” as predictor, the p-values for third degree are significant but not for second degree; for “black” as predictor, the p-values suggest that the quadratic and cubic coefficients are not statistically significant, so in this latter case no non-linear effect is visible for black and chas.
